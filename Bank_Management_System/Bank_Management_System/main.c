@@ -4,6 +4,13 @@
 #include<stdlib.h>
 #include<crtdbg.h>
 
+struct bank_account;
+typedef struct bank_account* Bank_Account_Position;
+typedef struct bank_account {
+	int personID;
+	int balance;
+} bank_account;
+
 int main()
 {
 
