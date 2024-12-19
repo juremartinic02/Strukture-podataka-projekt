@@ -4,12 +4,22 @@
 #include<stdlib.h>
 #include<crtdbg.h>
 
-struct bank_account;
-typedef struct bank_account* Bank_Account_Position;
-typedef struct bank_account {
+#define MAX_NAME_LENGTH 32
+
+struct account;
+typedef struct account* AccountPosition;
+typedef struct account {
 	int personID;
 	int balance;
-} bank_account;
+} Account;
+
+struct client;
+typedef struct client* ClientPosition;
+typedef struct client {
+	int ID;
+	char firstName[MAX_NAME_LENGTH];
+	char lastName[MAX_NAME_LENGTH];
+} Client;
 
 int main()
 {
