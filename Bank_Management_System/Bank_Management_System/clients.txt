@@ -2,6 +2,5 @@ LIST OF ACCOUNTS IN THE BANK
 -------------------------------------------------------------------------------
 ID	First Name	Last Name	Username	Password	Balance	Creation Time
 -------------------------------------------------------------------------------
-279	marko	marko	markisa	marko	0	2025-01-07 12:04:59
-255	jure	jure	jure	jure	1900	2025-01-07 12:47:01
-279	marko	marko	markisa	marko	900	2025-01-07 12:04:59
+816	Duje	Cengic	duje	duje	300	2025-01-07 18:18:53
+460	Jure	Martinic	jurenzzy	jure	100	2025-01-07 18:18:40

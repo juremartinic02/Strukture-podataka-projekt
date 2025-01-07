@@ -1,3 +1,4 @@
-markisa | Deposit | 100 | 2025-01-07 12:46:25
-markisa | Withdraw | 200 | 2025-01-07 12:46:36
-markisa | Transfer | 900 | To: jure | 2025-01-07 12:47:26
+
+jurenzzy | Deposit | 300 | 2025-01-07 18:22:14
+jurenzzy | Withdraw | 200 | 2025-01-07 18:22:18
+jurenzzy | Transfer | 100 | To: duje | 2025-01-07 18:22:37

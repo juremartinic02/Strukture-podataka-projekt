@@ -7,8 +7,6 @@
 #include<ctype.h>
 #include<crtdbg.h>
 
-#include<openssl/sha.h>
-
 #define MAX_NAME_LENGTH 32
 
 // Struktura klijenta
@@ -44,6 +42,12 @@ void UpdateAccount();
 void Transactions();
 Client* FindClientByUsername(const char* username, const char* password);
 void SaveTransactionLog(const char* username, const char* action, int amount, const char* otherUsername);
+void PrintTransactionLog();
+void SortAndPrintClients();
+Client* CopyClientList();
+void SortClientsByBalance(Client** headRef, int descending);
+void SortClientsByStringField(Client** headRef, size_t offset, int descending);
+void PrintClientList(Client* list);
 
 // Glavna funkcija
 int main() {
@@ -79,8 +83,10 @@ void Menu() {
         printf(" 2. View all clients\n");
         printf(" 3. Delete an existing account\n");
         printf(" 4. Update account\n");
-        printf(" 5. Transactions\n"); // New option
-        printf(" 6. Exit\n");
+        printf(" 5. Transactions\n");
+        printf(" 6. Print transaction log\n");
+        printf(" 7. Sort client accounts by:\n");
+        printf(" 8. Exit\n");
 
         for (i = 0; i < consoleWidth; i++) printf("=");
         printf("\n");
@@ -101,8 +107,8 @@ void Menu() {
 
                 if (validInput) {
                     choice = atoi(buffer);
-                    if (choice < 1 || choice > 6) {
-                        printf("Invalid choice! Please enter a number between 1 and 6.\n");
+                    if (choice < 1 || choice > 8) {
+                        printf("Invalid choice! Please enter a number between 1 and 8.\n");
                         validInput = 0;
                     }
                 }
@@ -129,12 +135,18 @@ void Menu() {
             Transactions();
             break;
         case 6:
+            PrintTransactionLog();
+            break;
+        case 7:
+            SortAndPrintClients();
+            break;
+        case 8:
             printf("Exiting the program. Goodbye!\n");
             break;
         }
 
         system("pause");
-    } while (choice != 6);
+    } while (choice != 8);
 }
 
 int isValidName(const char* name) {
@@ -299,7 +311,7 @@ void CreateAccount() {
 
 
 void SaveClientsToFile() {
-    FILE* file = fopen("clients.txt", "a+"); // a+ -> Open file for reading and appending
+    FILE* file = fopen("clients.txt", "w");
     if (!file) {
         perror("Failed to open file");
         return;
@@ -717,4 +729,240 @@ void SaveTransactionLog(const char* username, const char* action, int amount, co
     }
 
     fclose(file);
+}
+
+void PrintTransactionLog() {
+    char username[MAX_NAME_LENGTH];
+    char password[MAX_NAME_LENGTH];
+
+    // Prompt user for username and password
+    printf("Enter your username: ");
+    getValidatedInput(username, sizeof(username));
+
+    printf("Enter your password: ");
+    getValidatedInput(password, sizeof(password));
+
+    // Validate credentials
+    Client* user = FindClientByUsername(username, password);
+    if (!user) {
+        printf("Invalid username or password!\n");
+        return;
+    }
+
+    // Open the transaction log file
+    FILE* file = fopen("transactions.txt", "r");
+    if (!file) {
+        perror("Failed to open transaction log file");
+        return;
+    }
+
+    char line[256];
+    int found = 0;
+
+    printf("\nTransaction Log for %s:\n", username);
+    printf("-------------------------------------------------------------\n");
+
+    // Read and filter transaction logs
+    while (fgets(line, sizeof(line), file)) {
+        if (strstr(line, username)) {
+            printf("%s", line);
+            found = 1;
+        }
+    }
+
+    fclose(file);
+
+    if (!found) {
+        printf("No transactions found for this account.\n");
+    }
+
+    printf("-------------------------------------------------------------\n");
+}
+
+void SortAndPrintClients() {
+    int choice, order;
+    Client* sortedList = NULL;
+
+    // Prompt user for sorting parameter
+    printf("\nChoose sorting parameter:\n");
+    printf("1. Sort by Balance\n");
+    printf("2. Sort by Name\n");
+    printf("3. Sort by Last Name\n");
+    printf("4. Sort by Username\n");
+    printf("Enter your choice: ");
+    scanf("%d", &choice);
+    clearInputBuffer();
+
+    if (choice < 1 || choice > 4) {
+        printf("Invalid choice! Returning to main menu.\n");
+        return;
+    }
+
+    // Prompt user for sorting order
+    if (choice == 1) { // Balance
+        printf("\nChoose sorting order:\n");
+        printf("1. Ascending (Low to High)\n");
+        printf("2. Descending (High to Low)\n");
+    }
+    else { // Name, Last Name, Username
+        printf("\nChoose sorting order:\n");
+        printf("1. Alphabetical (A-Z)\n");
+        printf("2. Reverse Alphabetical (Z-A)\n");
+    }
+
+    printf("Enter your choice: ");
+    scanf("%d", &order);
+    clearInputBuffer();
+
+    if (order < 1 || order > 2) {
+        printf("Invalid choice! Returning to main menu.\n");
+        return;
+    }
+
+    // Create a copy of the client list for sorting
+    sortedList = CopyClientList();
+
+    // Sort the list based on the user's choice
+    switch (choice) {
+    case 1: // Balance
+        SortClientsByBalance(&sortedList, order == 2);
+        break;
+    case 2: // Name
+        SortClientsByStringField(&sortedList, offsetof(Client, firstName), order == 2);
+        break;
+    case 3: // Last Name
+        SortClientsByStringField(&sortedList, offsetof(Client, lastName), order == 2);
+        break;
+    case 4: // Username
+        SortClientsByStringField(&sortedList, offsetof(Client, username), order == 2);
+        break;
+    }
+
+    // Print the sorted list
+    PrintClientList(sortedList);
+
+    // Free the sorted list
+    FreeClientList(sortedList);
+}
+
+// Function to create a copy of the client list
+Client* CopyClientList() {
+    Client* copyHead = NULL, * current = head, * newClient, * last = NULL;
+
+    while (current) {
+        newClient = (Client*)malloc(sizeof(Client));
+        if (!newClient) {
+            perror("Memory allocation failed");
+            FreeClientList(copyHead);
+            return NULL;
+        }
+
+        *newClient = *current; // Copy the structure
+        newClient->next = NULL;
+
+        if (!copyHead) {
+            copyHead = newClient;
+        }
+        else {
+            last->next = newClient;
+        }
+        last = newClient;
+        current = current->next;
+    }
+    return copyHead;
+}
+
+// Function to sort clients by balance
+void SortClientsByBalance(Client** headRef, int descending) {
+    if (!*headRef || !(*headRef)->next) return;
+
+    Client* sorted = NULL, * current = *headRef, * prev, * maxPrev, * maxNode;
+
+    while (current) {
+        maxPrev = NULL;
+        maxNode = current;
+        prev = current;
+
+        // Find the node with the max/min balance
+        while (prev->next) {
+            if ((descending && prev->next->balance < maxNode->balance) ||
+                (!descending && prev->next->balance > maxNode->balance)) {
+                maxPrev = prev;
+                maxNode = prev->next;
+            }
+            prev = prev->next;
+        }
+
+        // Remove the max/min node from the original list
+        if (maxPrev) {
+            maxPrev->next = maxNode->next;
+        }
+        else {
+            current = maxNode->next;
+        }
+
+        // Add the max/min node to the sorted list
+        maxNode->next = sorted;
+        sorted = maxNode;
+    }
+    *headRef = sorted;
+}
+
+// Function to sort clients by string fields (e.g., name, last name, username)
+void SortClientsByStringField(Client** headRef, size_t offset, int descending) {
+    if (!*headRef || !(*headRef)->next) return;
+
+    Client* sorted = NULL, * current = *headRef, * prev, * maxPrev, * maxNode;
+
+    while (current) {
+        maxPrev = NULL;
+        maxNode = current;
+        prev = current;
+
+        // Find the node with the max/min string value
+        while (prev->next) {
+            const char* field1 = (const char*)((char*)maxNode + offset);
+            const char* field2 = (const char*)((char*)prev->next + offset);
+
+            if ((descending && strcmp(field2, field1) < 0) ||
+                (!descending && strcmp(field2, field1) > 0)) {
+                maxPrev = prev;
+                maxNode = prev->next;
+            }
+            prev = prev->next;
+        }
+
+        // Remove the max/min node from the original list
+        if (maxPrev) {
+            maxPrev->next = maxNode->next;
+        }
+        else {
+            current = maxNode->next;
+        }
+
+        // Add the max/min node to the sorted list
+        maxNode->next = sorted;
+        sorted = maxNode;
+    }
+    *headRef = sorted;
+}
+
+// Function to print the list of clients
+void PrintClientList(Client* list) {
+    if (!list) {
+        printf("No clients to display.\n");
+        return;
+    }
+
+    printf("\nSorted List of Clients:\n");
+    printf("---------------------------------------------------------------------------------------------------------------\n");
+    printf("%-5s %-20s %-20s %-20s %-10s %-20s\n",
+        "ID", "First Name", "Last Name", "Username", "Balance", "Creation Time");
+    printf("---------------------------------------------------------------------------------------------------------------\n");
+
+    while (list) {
+        printf("%-5d %-20s %-20s %-20s %-10d %-20s\n",
+            list->ID, list->firstName, list->lastName, list->username, list->balance, list->creationTime);
+        list = list->next;
+    }
 }
