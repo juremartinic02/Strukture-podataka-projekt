@@ -2,5 +2,5 @@ LIST OF ACCOUNTS IN THE BANK
 -------------------------------------------------------------------------------
 ID	First Name	Last Name	Username	Password	Balance	Creation Time
 -------------------------------------------------------------------------------
-816	Duje	Cengic	duje	duje	300	2025-01-07 18:18:53
-460	Jure	Martinic	jurenzzy	jure	100	2025-01-07 18:18:40
+367	Jure	Martinic	jure	2392940246	700	2025-01-07 23:00:22
+102	Laura	Rebic	laura	160212430	1400	2025-01-07 23:09:22

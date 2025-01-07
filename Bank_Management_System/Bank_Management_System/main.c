@@ -170,6 +170,7 @@ void CreateAccount() {
     }
 
     char buffer[MAX_NAME_LENGTH];
+    char passwordConfirm[MAX_NAME_LENGTH];
 
     // Generate random unique ID
     newClient->ID = generateUniqueID();
@@ -221,13 +222,12 @@ void CreateAccount() {
     } while (1);
 
     // Password validation
-    char passwordConfirm[MAX_NAME_LENGTH];
     do {
         printf("Enter password (letters and numbers only, max %d characters): ", MAX_NAME_LENGTH - 1);
         if (getValidatedInput(buffer, sizeof(buffer)) && isValidUserCredential(buffer)) {
             printf("Confirm password: ");
             if (getValidatedInput(passwordConfirm, sizeof(passwordConfirm)) && strcmp(buffer, passwordConfirm) == 0) {
-                strcpy(newClient->password, buffer);
+                hashPassword(buffer, newClient->password); // Hash the password
                 break;
             }
             printf("Passwords do not match! Please try again.\n");
@@ -237,7 +237,7 @@ void CreateAccount() {
         }
     } while (1);
 
-    // Balance validation (user cant enter a negative number)
+    // Balance validation (user cannot enter a negative number)
     do {
         printf("Enter initial balance: ");
         if (scanf("%d", &newClient->balance) == 1 && newClient->balance >= 0) {
@@ -257,7 +257,6 @@ void CreateAccount() {
 
     SaveClientsToFile();
 }
-
 
 void SaveClientsToFile() {
     FILE* file = fopen("clients.txt", "w");
@@ -306,7 +305,7 @@ void LoadClientsFromFile() {
     }
 
     char line[256];
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) { // Skip headers
         if (fgets(line, sizeof(line), file) == NULL) {
             fclose(file);
             return;
@@ -328,6 +327,13 @@ void LoadClientsFromFile() {
             continue;
         }
 
+        // Verify if passwords are hashed
+        if (strspn(newClient->password, "0123456789") != strlen(newClient->password)) {
+            char hashedPassword[MAX_NAME_LENGTH];
+            hashPassword(newClient->password, hashedPassword);
+            strcpy(newClient->password, hashedPassword);
+        }
+
         newClient->next = head;
         head = newClient;
     }
@@ -347,15 +353,15 @@ void PrintClients() {
     // Print headers with proper alignment
     printf("LIST OF ACCOUNTS IN THE BANK\n");
     printf("---------------------------------------------------------------------------------------------------------------\n");
-    printf("%-5s %-20s %-20s %-20s %-20s %-10s %-20s\n",
-        "ID", "First Name", "Last Name", "Username", "Password", "Balance", "Creation Time");
+    printf("%-5s %-20s %-20s %-20s %-10s %-20s\n",
+        "ID", "First Name", "Last Name", "Username", "Balance", "Creation Time");
     printf("---------------------------------------------------------------------------------------------------------------\n");
 
     while (temp) {
         // Print each clients details with proper alignment
-        printf("%-5d %-20s %-20s %-20s %-20s %-10d %-20s\n",
+        printf("%-5d %-20s %-20s %-20s %-10d %-20s\n",
             temp->ID, temp->firstName, temp->lastName,
-            temp->username, temp->password, temp->balance, temp->creationTime);
+            temp->username, temp->balance, temp->creationTime);
         temp = temp->next;
     }
 }
@@ -395,22 +401,29 @@ void DeleteAccount() {
     char password[MAX_NAME_LENGTH];
     char confirmation;
 
+    // Prompt for username and password
     printf("Enter username of the account to delete: ");
     getValidatedInput(username, sizeof(username));
 
     printf("Enter password for the account: ");
     getValidatedInput(password, sizeof(password));
 
+    // Hash the input password for comparison
+    char hashedInput[MAX_NAME_LENGTH];
+    hashPassword(password, hashedInput);
+
     Client* temp = head;
     Client* prev = NULL;
 
+    // Search for the matching account
     while (temp != NULL) {
-        if (strcmp(temp->username, username) == 0 && strcmp(temp->password, password) == 0) {
+        if (strcmp(temp->username, username) == 0 && strcmp(temp->password, hashedInput) == 0) {
             printf("Account found! Are you sure you want to delete this account? (y/n): ");
             confirmation = getchar();
             clearInputBuffer();
 
             if (tolower(confirmation) == 'y') {
+                // Remove the account from the linked list
                 if (prev == NULL) {
                     head = temp->next;
                 }
@@ -418,8 +431,8 @@ void DeleteAccount() {
                     prev->next = temp->next;
                 }
 
-                free(temp);
-                SaveClientsToFileAfterDeletion();
+                free(temp); // Free memory
+                SaveClientsToFileAfterDeletion(); // Save updated list to file
                 printf("Account deleted successfully.\n");
                 return;
             }
@@ -446,104 +459,77 @@ void UpdateAccount() {
     printf("Enter your password: ");
     getValidatedInput(password, sizeof(password));
 
-    // Search for the client
-    while (temp != NULL) {
-        if (strcmp(temp->username, username) == 0 && strcmp(temp->password, password) == 0) {
-            printf("Account found!\n");
-
-            // Iterate through each field for potential updates
-            char choice;
-
-            printf("Current first name: %s\nDo you want to update it? (y/n): ", temp->firstName);
-            choice = getchar();
-            clearInputBuffer();
-            if (tolower(choice) == 'y') {
-                char newFirstName[MAX_NAME_LENGTH];
-                printf("Enter new first name: ");
-                getValidatedInput(newFirstName, sizeof(newFirstName));
-                if (isValidName(newFirstName)) {
-                    strcpy(temp->firstName, newFirstName);
-                    printf("First name updated successfully.\n");
-                }
-                else {
-                    printf("Invalid first name. Update skipped.\n");
-                }
-            }
-
-            printf("Current last name: %s\nDo you want to update it? (y/n): ", temp->lastName);
-            choice = getchar();
-            clearInputBuffer();
-            if (tolower(choice) == 'y') {
-                char newLastName[MAX_NAME_LENGTH];
-                printf("Enter new last name: ");
-                getValidatedInput(newLastName, sizeof(newLastName));
-                if (isValidName(newLastName)) {
-                    strcpy(temp->lastName, newLastName);
-                    printf("Last name updated successfully.\n");
-                }
-                else {
-                    printf("Invalid last name. Update skipped.\n");
-                }
-            }
-
-            printf("Current username: %s\nDo you want to update it? (y/n): ", temp->username);
-            choice = getchar();
-            clearInputBuffer();
-            if (tolower(choice) == 'y') {
-                char newUsername[MAX_NAME_LENGTH];
-                printf("Enter new username: ");
-                getValidatedInput(newUsername, sizeof(newUsername));
-                if (isValidUserCredential(newUsername)) {
-                    // Ensure the username is unique
-                    Client* current = head;
-                    int usernameExists = 0;
-                    while (current != NULL) {
-                        if (strcmp(current->username, newUsername) == 0) {
-                            usernameExists = 1;
-                            break;
-                        }
-                        current = current->next;
-                    }
-                    if (!usernameExists) {
-                        strcpy(temp->username, newUsername);
-                        printf("Username updated successfully.\n");
-                    }
-                    else {
-                        printf("Username already exists. Update skipped.\n");
-                    }
-                }
-                else {
-                    printf("Invalid username. Update skipped.\n");
-                }
-            }
-
-            printf("Do you want to update the password? (y/n): ");
-            choice = getchar();
-            clearInputBuffer();
-            if (tolower(choice) == 'y') {
-                char newPassword[MAX_NAME_LENGTH], passwordConfirm[MAX_NAME_LENGTH];
-                printf("Enter new password: ");
-                getValidatedInput(newPassword, sizeof(newPassword));
-                printf("Confirm new password: ");
-                getValidatedInput(passwordConfirm, sizeof(passwordConfirm));
-                if (strcmp(newPassword, passwordConfirm) == 0 && isValidUserCredential(newPassword)) {
-                    strcpy(temp->password, newPassword);
-                    printf("Password updated successfully.\n");
-                }
-                else {
-                    printf("Password update failed. Ensure they match and meet requirements.\n");
-                }
-            }
-
-            SaveClientsToFileAfterDeletion(); // Save updated data to file
-            printf("Account updated successfully.\n");
-            return;
-        }
-        temp = temp->next;
+    temp = FindClientByUsername(username, password);
+    if (!temp) {
+        printf("Account not found or incorrect credentials.\n");
+        return;
     }
 
-    printf("Account not found or incorrect credentials.\n");
+    printf("Account found!\n");
+
+    // Update first name
+    char choice;
+    printf("Current first name: %s\nDo you want to update it? (y/n): ", temp->firstName);
+    choice = getchar();
+    clearInputBuffer();
+    if (tolower(choice) == 'y') {
+        char newFirstName[MAX_NAME_LENGTH];
+        printf("Enter new first name: ");
+        getValidatedInput(newFirstName, sizeof(newFirstName));
+        if (isValidName(newFirstName)) {
+            strcpy(temp->firstName, newFirstName);
+            printf("First name updated successfully.\n");
+        }
+        else {
+            printf("Invalid first name. Update skipped.\n");
+        }
+    }
+
+    // Update last name
+    printf("Current last name: %s\nDo you want to update it? (y/n): ", temp->lastName);
+    choice = getchar();
+    clearInputBuffer();
+    if (tolower(choice) == 'y') {
+        char newLastName[MAX_NAME_LENGTH];
+        printf("Enter new last name: ");
+        getValidatedInput(newLastName, sizeof(newLastName));
+        if (isValidName(newLastName)) {
+            strcpy(temp->lastName, newLastName);
+            printf("Last name updated successfully.\n");
+        }
+        else {
+            printf("Invalid last name. Update skipped.\n");
+        }
+    }
+
+    // Update password
+    printf("Do you want to update the password? (y/n): ");
+    choice = getchar();
+    clearInputBuffer();
+    if (tolower(choice) == 'y') {
+        char newPassword[MAX_NAME_LENGTH], passwordConfirm[MAX_NAME_LENGTH];
+        printf("Enter new password: ");
+        getValidatedInput(newPassword, sizeof(newPassword));
+        printf("Confirm new password: ");
+        getValidatedInput(passwordConfirm, sizeof(passwordConfirm));
+        if (strcmp(newPassword, passwordConfirm) == 0 && isValidUserCredential(newPassword)) {
+            hashPassword(newPassword, temp->password);
+            printf("Password updated successfully.\n");
+
+            // Save the updated client data immediately
+            SaveClientsToFile();
+            printf("Changes saved to file.\n");
+        }
+        else {
+            printf("Password update failed. Ensure they match and meet requirements.\n");
+        }
+    }
+
+    // Ensure all changes are saved to the file
+    SaveClientsToFile();
+    printf("Account updated successfully.\n");
 }
+
 
 void Transactions() {
     char username[MAX_NAME_LENGTH];
@@ -650,14 +636,23 @@ void Transactions() {
 // Find a client by username and password
 Client* FindClientByUsername(const char* username, const char* password) {
     Client* temp = head;
+
+    char hashedInput[MAX_NAME_LENGTH];
+    if (password) {
+        hashPassword(password, hashedInput); // Hash the input password
+    }
+
     while (temp) {
-        if (strcmp(temp->username, username) == 0 && (!password || strcmp(temp->password, password) == 0)) {
+        if (strcmp(temp->username, username) == 0 &&
+            (!password || strcmp(temp->password, hashedInput) == 0)) {
             return temp;
         }
         temp = temp->next;
     }
     return NULL;
 }
+
+
 
 // Save transaction log
 void SaveTransactionLog(const char* username, const char* action, int amount, const char* otherUsername) {
@@ -914,4 +909,13 @@ void PrintClientList(Client* list) {
             list->ID, list->firstName, list->lastName, list->username, list->balance, list->creationTime);
         list = list->next;
     }
+}
+
+void hashPassword(const char* password, char* hashedPassword) {
+    unsigned long hash = 5381;
+    int c;
+    while ((c = *password++)) {
+        hash = ((hash << 5) + hash) + c; // hash * 33 + c
+    }
+    snprintf(hashedPassword, MAX_NAME_LENGTH, "%lu", hash);
 }

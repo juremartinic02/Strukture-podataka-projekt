@@ -50,5 +50,6 @@ Client* CopyClientList();
 void SortClientsByBalance(Client** headRef, int descending);
 void SortClientsByStringField(Client** headRef, size_t offset, int descending);
 void PrintClientList(Client* list);
+void hashPassword(const char* password, char* hashedPassword);
 
 #endif
