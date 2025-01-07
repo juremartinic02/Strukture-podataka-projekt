@@ -20,6 +20,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="client_accounts.txt" />
+    <Text Include="clients.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="transactions.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
