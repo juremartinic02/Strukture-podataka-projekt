@@ -2,32 +2,37 @@
 
 int main() {
     Menu();
+
+    _CrtDumpMemoryLeaks();
     return 0;
 }
 
 void Menu() {
-    int choice = 0;
+    int choice = 0; // Variable to store user menu choice
     int consoleWidth = 120;
     int i;
     char buffer[32];
     int validInput;
 
     do {
-        system("cls");
+        system("cls"); // Clears the console screen
 
         // Upper border
         for (i = 0; i < consoleWidth; i++) printf("=");
         printf("\n");
 
+        // Display the title of the bank management system
         printf("%*s%-*s\n", (consoleWidth - 35) / 2, "", (consoleWidth - 35) / 2, "BANKING MANAGEMENT SYSTEM");
         printf("%*s%-*s\n", (consoleWidth + 25) / 2, "", (consoleWidth + 25) / 2, "Projekt by Jure Martinic");
 
-        // Middle section
+        // Middle border
         for (i = 0; i < consoleWidth; i++) printf("=");
         printf("\n");
 
+        // Function that loads the clients from clients.txt file
         LoadClientsFromFile();
         printf("\n");
+
         printf(" 1. Create a new account\n");
         printf(" 2. View all clients\n");
         printf(" 3. Delete an existing account\n");
@@ -37,15 +42,19 @@ void Menu() {
         printf(" 7. Sort client accounts by:\n");
         printf(" 8. Exit\n");
 
+        // Lower border
         for (i = 0; i < consoleWidth; i++) printf("=");
         printf("\n");
 
         do {
             printf("Enter your choice: ");
-            validInput = 1;
+            validInput = 1; // We assume that input is valid initially
 
+            // Clear the input buffer (removing waiting characters)
+            // This is not the optimal way to do it
             fflush(stdin);
 
+            // Reads input and checks if it is a number
             if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
                 for (i = 0; buffer[i] != '\n' && buffer[i] != '\0'; i++) {
                     if (!isdigit(buffer[i])) {
@@ -54,6 +63,7 @@ void Menu() {
                     }
                 }
 
+                // If input is valid, atoi function coverts a string stored in buffer to actual integer value and check range
                 if (validInput) {
                     choice = atoi(buffer);
                     if (choice < 1 || choice > 8) {
@@ -94,13 +104,15 @@ void Menu() {
             break;
         }
 
-        system("pause");
+        system("pause"); // Pause the console before redisplaying the menu
     } while (choice != 8);
 }
 
 int isValidName(const char* name) {
+    // Check if the name is empty or exceeds the maximum allowed length
     if (strlen(name) > MAX_NAME_LENGTH - 1 || strlen(name) == 0) return 0;
 
+    // Check every character of the name and return false if a character is neither alpabetic or space
     for (int i = 0; name[i] != '\0'; i++) {
         if (!isalpha(name[i]) && name[i] != ' ') return 0;
     }
@@ -108,14 +120,18 @@ int isValidName(const char* name) {
 }
 
 int isValidUserCredential(const char* str) {
+    // Check if the string is empty or exceeds the maximum allowed length
     if (strlen(str) > MAX_NAME_LENGTH - 1 || strlen(str) == 0) return 0;
 
+    // Return false if a character is not alphabetical character or digit
     for (int i = 0; str[i] != '\0'; i++) {
-        if (!isalnum(str[i])) return 0;  // Only letters and numbers allowed
+        if (!isalnum(str[i])) return 0; 
     }
     return 1;
 }
 
+// buffer - a pointer to the character array
+// size - maximum size of the buffer
 int getValidatedInput(char* buffer, size_t size) {
     if (fgets(buffer, size, stdin) == NULL) {
         return 0; // Input failed
@@ -129,8 +145,8 @@ int getValidatedInput(char* buffer, size_t size) {
     return 1; // Input successful
 }
 
-
 int generateUniqueID() {
+    // Static variable ensures `srand` is called only once per program execution
     static int initialized = 0;
     if (!initialized) {
         srand((unsigned int)time(NULL));
@@ -152,7 +168,7 @@ int generateUniqueID() {
             }
             current = current->next;
         }
-    } while (!isUnique);
+    } while (!isUnique); // Repeat until a unique ID is generated
 
     return newID;
 }
@@ -163,14 +179,15 @@ void clearInputBuffer() {
 }
 
 void CreateAccount() {
-    Client* newClient = (Client*)malloc(sizeof(Client));
+    Client* newClient = NULL;
+    newClient = (Client*)malloc(sizeof(Client));
     if (!newClient) {
         perror("Memory allocation failed");
         return;
     }
 
-    char buffer[MAX_NAME_LENGTH];
-    char passwordConfirm[MAX_NAME_LENGTH];
+    char buffer[MAX_NAME_LENGTH]; // Buffer for input validation
+    char passwordConfirm[MAX_NAME_LENGTH]; // Buffer for password confirmation
 
     // Generate random unique ID
     newClient->ID = generateUniqueID();
@@ -180,7 +197,7 @@ void CreateAccount() {
     do {
         printf("Enter first name (letters only, max %d characters): ", MAX_NAME_LENGTH - 1);
         if (getValidatedInput(buffer, sizeof(buffer)) && isValidName(buffer)) {
-            strcpy(newClient->firstName, buffer);
+            strcpy(newClient->firstName, buffer); // Store validatet first name
             break;
         }
         printf("Invalid first name or input too long! Use only letters.\n");
@@ -190,7 +207,7 @@ void CreateAccount() {
     do {
         printf("Enter last name (letters only, max %d characters): ", MAX_NAME_LENGTH - 1);
         if (getValidatedInput(buffer, sizeof(buffer)) && isValidName(buffer)) {
-            strcpy(newClient->lastName, buffer);
+            strcpy(newClient->lastName, buffer); // Store validated last name
             break;
         }
         printf("Invalid last name or input too long! Use only letters.\n");
@@ -227,7 +244,7 @@ void CreateAccount() {
         if (getValidatedInput(buffer, sizeof(buffer)) && isValidUserCredential(buffer)) {
             printf("Confirm password: ");
             if (getValidatedInput(passwordConfirm, sizeof(passwordConfirm)) && strcmp(buffer, passwordConfirm) == 0) {
-                hashPassword(buffer, newClient->password); // Hash the password
+                hashPassword(buffer, newClient->password); // Hash and store the password
                 break;
             }
             printf("Passwords do not match! Please try again.\n");
@@ -250,23 +267,25 @@ void CreateAccount() {
 
     // Set creation time and add to linked list
     GetCurrentTime(newClient->creationTime, sizeof(newClient->creationTime));
-    newClient->next = head;
+    newClient->next = head; // Insert new client at the head of the linked list
     head = newClient;
 
     printf("Account successfully created!\n");
 
+    // Save all clients to the clients.txt file
     SaveClientsToFile();
 }
 
 void SaveClientsToFile() {
-    FILE* file = fopen("clients.txt", "w");
+    FILE* file = NULL;
+    file = fopen("clients.txt", "w"); // Open the file in write mode so we can save clients to the clients.txt file
     if (!file) {
         perror("Failed to open file");
         return;
     }
 
     // Check if the file is empty to write headers
-    fseek(file, 0, SEEK_END);
+    fseek(file, 0, SEEK_END); // Move the file pointer to the end of the file
     if (ftell(file) == 0) { // If file size is 0, write headers
         fprintf(file, "LIST OF ACCOUNTS IN THE BANK\n");
         fprintf(file, "-------------------------------------------------------------------------------\n");
@@ -274,6 +293,7 @@ void SaveClientsToFile() {
         fprintf(file, "-------------------------------------------------------------------------------\n");
     }
 
+    // Traverse the linked list and write each client's data
     Client* temp = head;
     while (temp) {
         fprintf(file, "%d\t%s\t%s\t%s\t%s\t%d\t%s\n",
@@ -298,7 +318,8 @@ void FreeClientList() {
 void LoadClientsFromFile() {
     FreeClientList(); // Clear the existing list before loading
 
-    FILE* file = fopen("clients.txt", "r");
+    FILE* file = NULL;
+    file = fopen("clients.txt", "r");
     if (!file) {
         printf("No existing data found. Starting fresh.\n");
         return;
@@ -313,13 +334,15 @@ void LoadClientsFromFile() {
     }
 
     while (fgets(line, sizeof(line), file)) {
-        Client* newClient = (Client*)malloc(sizeof(Client));
+        Client* newClient = NULL;
+        newClient = (Client*)malloc(sizeof(Client));
         if (!newClient) {
             perror("Memory allocation failed");
             fclose(file);
             return;
         }
 
+        // Parse the data from the line into the Client structure
         if (sscanf(line, "%d\t%s\t%s\t%s\t%s\t%d\t%[^\n]", &newClient->ID, newClient->firstName,
             newClient->lastName, newClient->username, newClient->password,
             &newClient->balance, newClient->creationTime) != 7) {
@@ -329,6 +352,8 @@ void LoadClientsFromFile() {
 
         // Verify if passwords are hashed
         if (strspn(newClient->password, "0123456789") != strlen(newClient->password)) {
+            
+            // If the password is not numeric, hash it and store the hashed version
             char hashedPassword[MAX_NAME_LENGTH];
             hashPassword(newClient->password, hashedPassword);
             strcpy(newClient->password, hashedPassword);
@@ -343,11 +368,13 @@ void LoadClientsFromFile() {
 }
 
 void PrintClients() {
+    // Check if the linked list is empty
     if (!head) {
         printf("No clients found.\n");
         return;
     }
 
+    // Pointer to traverse the linked list
     Client* temp = head;
 
     // Print headers with proper alignment
@@ -367,13 +394,19 @@ void PrintClients() {
 }
 
 void GetCurrentTime(char* buffer, size_t bufferSize) {
+    // Get the current time in seconds
     time_t t = time(NULL);
+
+    // Convert the time to a structure representing local time
     struct tm* tm_info = localtime(&t);
+
+    // Format the time as "YYYY-MM-DD HH:MM:SS" and store it in the buffer
     strftime(buffer, bufferSize, "%Y-%m-%d %H:%M:%S", tm_info);
 }
 
 void SaveClientsToFileAfterDeletion() {
-    FILE* file = fopen("clients.txt", "w");
+    FILE* file = NULL;
+    file = fopen("clients.txt", "w");
     if (!file) {
         perror("Failed to open file");
         return;
@@ -384,7 +417,9 @@ void SaveClientsToFileAfterDeletion() {
     fprintf(file, "ID\tFirst Name\tLast Name\tUsername\tPassword\tBalance\tCreation Time\n");
     fprintf(file, "-------------------------------------------------------------------------------\n");
 
+    // Start from the head of the linked list
     Client* temp = head;
+
     while (temp) {
         fprintf(file, "%d\t%s\t%s\t%s\t%s\t%d\t%s\n",
             temp->ID, temp->firstName, temp->lastName,
@@ -412,15 +447,17 @@ void DeleteAccount() {
     char hashedInput[MAX_NAME_LENGTH];
     hashPassword(password, hashedInput);
 
-    Client* temp = head;
-    Client* prev = NULL;
+    Client* temp = head; // Pointer to traverse the list
+    Client* prev = NULL; // Pointer to keep track of the previous node
 
     // Search for the matching account
     while (temp != NULL) {
+        // Check if username and hashed password match
         if (strcmp(temp->username, username) == 0 && strcmp(temp->password, hashedInput) == 0) {
+            // Prompt for confirmation before deletion
             printf("Account found! Are you sure you want to delete this account? (y/n): ");
             confirmation = getchar();
-            clearInputBuffer();
+            clearInputBuffer(); // Clear any excess input
 
             if (tolower(confirmation) == 'y') {
                 // Remove the account from the linked list
@@ -525,11 +562,10 @@ void UpdateAccount() {
         }
     }
 
-    // Ensure all changes are saved to the file
+    // Save any remaining changes to the file
     SaveClientsToFile();
     printf("Account updated successfully.\n");
 }
-
 
 void Transactions() {
     char username[MAX_NAME_LENGTH];
@@ -548,6 +584,7 @@ void Transactions() {
         return;
     }
 
+    // Variables for user choice, transaction amounts, and target user (for transfers)
     int choice, amount;
     char targetUsername[MAX_NAME_LENGTH];
     Client* targetUser;
@@ -558,20 +595,23 @@ void Transactions() {
         printf("3. Transfer money\n");
         printf("4. Exit transactions\n");
         printf("Choose an option: ");
-        scanf("%d", &choice);
+        (void)scanf("%d", &choice);
         clearInputBuffer();
 
+        // Handle the user's menu choice
         switch (choice) {
         case 1: // Deposit money
             printf("Your current balance is: %d\n", user->balance);
             printf("Enter amount to deposit: ");
-            scanf("%d", &amount);
+            (void)scanf("%d", &amount);
             clearInputBuffer();
 
+            // Ensure the deposit amount is valid
             if (amount <= 0) {
                 printf("Invalid amount!\n");
             }
             else {
+                // Update the balance and log the transaction
                 user->balance += amount;
                 SaveTransactionLog(user->username, "Deposit", amount, NULL);
                 SaveClientsToFileAfterDeletion();
@@ -582,13 +622,15 @@ void Transactions() {
         case 2: // Withdraw money
             printf("Your current balance is: %d\n", user->balance);
             printf("Enter amount to withdraw: ");
-            scanf("%d", &amount);
+            (void)scanf("%d", &amount);
             clearInputBuffer();
 
+            // Check if the withdrawal amount is valid and does not exceed balance
             if (amount <= 0 || amount > user->balance) {
                 printf("Invalid amount!\n");
             }
             else {
+                // Update the balance and log the transaction
                 user->balance -= amount;
                 SaveTransactionLog(user->username, "Withdraw", amount, NULL);
                 SaveClientsToFileAfterDeletion();
@@ -597,10 +639,14 @@ void Transactions() {
             break;
 
         case 3: // Transfer money
+            // Get the username of the transfer recipient
             printf("Enter the username of the recipient: ");
             getValidatedInput(targetUsername, sizeof(targetUsername));
+
+            // Find the recipient client
             targetUser = FindClientByUsername(targetUsername, NULL);
 
+            // Check if the recipient exists
             if (!targetUser) {
                 printf("Recipient not found!\n");
                 break;
@@ -608,7 +654,7 @@ void Transactions() {
 
             printf("Your current balance is: %d\n", user->balance);
             printf("Enter amount to transfer: ");
-            scanf("%d", &amount);
+            (void)scanf("%d", &amount);
             clearInputBuffer();
 
             if (amount <= 0 || amount > user->balance) {
@@ -627,22 +673,22 @@ void Transactions() {
             printf("Exiting transactions.\n");
             break;
 
-        default:
+        default: // Handle invalid menu options
             printf("Invalid option! Try again.\n");
         }
     } while (choice != 4);
 }
 
-// Find a client by username and password
 Client* FindClientByUsername(const char* username, const char* password) {
-    Client* temp = head;
+    Client* temp = head; // Initialize a temporary pointer to iterate through the list of clients
 
     char hashedInput[MAX_NAME_LENGTH];
     if (password) {
-        hashPassword(password, hashedInput); // Hash the input password
+        hashPassword(password, hashedInput); // Hash the input password if provided
     }
 
     while (temp) {
+        //Check if the current client's username matches the input username and if the password matches
         if (strcmp(temp->username, username) == 0 &&
             (!password || strcmp(temp->password, hashedInput) == 0)) {
             return temp;
@@ -652,9 +698,6 @@ Client* FindClientByUsername(const char* username, const char* password) {
     return NULL;
 }
 
-
-
-// Save transaction log
 void SaveTransactionLog(const char* username, const char* action, int amount, const char* otherUsername) {
     FILE* file = fopen("transactions.txt", "a");
     if (!file) {
@@ -662,13 +705,16 @@ void SaveTransactionLog(const char* username, const char* action, int amount, co
         return;
     }
 
+    // Declare a buffer to store the current timestamp
     char timestamp[20];
-    GetCurrentTime(timestamp, sizeof(timestamp));
+    GetCurrentTime(timestamp, sizeof(timestamp)); // Get the current time and store it in the timestamp buffer
 
     if (otherUsername) {
+        // Log the transaction with the recipient's username
         fprintf(file, "%s | %s | %d | To: %s | %s\n", username, action, amount, otherUsername, timestamp);
     }
     else {
+        // Log the transaction without a recipient username
         fprintf(file, "%s | %s | %d | %s\n", username, action, amount, timestamp);
     }
 
@@ -686,7 +732,7 @@ void PrintTransactionLog() {
     printf("Enter your password: ");
     getValidatedInput(password, sizeof(password));
 
-    // Validate credentials
+    // Validate credentials by searching for the username and password
     Client* user = FindClientByUsername(username, password);
     if (!user) {
         printf("Invalid username or password!\n");
@@ -700,17 +746,17 @@ void PrintTransactionLog() {
         return;
     }
 
-    char line[256];
-    int found = 0;
+    char line[256]; // Buffer to store each line of the transaction log
+    int found = 0; // Flag to check if any transactions were found for the user
 
     printf("\nTransaction Log for %s:\n", username);
     printf("-------------------------------------------------------------\n");
 
     // Read and filter transaction logs
     while (fgets(line, sizeof(line), file)) {
-        if (strstr(line, username)) {
-            printf("%s", line);
-            found = 1;
+        if (strstr(line, username)) { // Check if the username appears in the log line
+            printf("%s", line); // Print the transaction log line for the user
+            found = 1; // Mark that at least one transaction was found
         }
     }
 
@@ -724,7 +770,7 @@ void PrintTransactionLog() {
 }
 
 void SortAndPrintClients() {
-    int choice, order;
+    int choice, order; // Variables to store the user's sorting parameter and order choice
     Client* sortedList = NULL;
 
     // Prompt user for sorting parameter
@@ -734,9 +780,10 @@ void SortAndPrintClients() {
     printf("3. Sort by Last Name\n");
     printf("4. Sort by Username\n");
     printf("Enter your choice: ");
-    scanf("%d", &choice);
+    (void)scanf("%d", &choice);
     clearInputBuffer();
 
+    // Check if the input choice is valid
     if (choice < 1 || choice > 4) {
         printf("Invalid choice! Returning to main menu.\n");
         return;
@@ -755,7 +802,7 @@ void SortAndPrintClients() {
     }
 
     printf("Enter your choice: ");
-    scanf("%d", &order);
+    (void)scanf("%d", &order);
     clearInputBuffer();
 
     if (order < 1 || order > 2) {
@@ -763,7 +810,7 @@ void SortAndPrintClients() {
         return;
     }
 
-    // Create a copy of the client list for sorting
+    // Create a copy of the client list to sort (so original list is not modified)
     sortedList = CopyClientList();
 
     // Sort the list based on the user's choice
@@ -789,10 +836,10 @@ void SortAndPrintClients() {
     FreeClientList(sortedList);
 }
 
-// Function to create a copy of the client list
 Client* CopyClientList() {
     Client* copyHead = NULL, * current = head, * newClient, * last = NULL;
 
+    // Iterate through the original client list
     while (current) {
         newClient = (Client*)malloc(sizeof(Client));
         if (!newClient) {
@@ -801,23 +848,25 @@ Client* CopyClientList() {
             return NULL;
         }
 
-        *newClient = *current; // Copy the structure
-        newClient->next = NULL;
+        *newClient = *current; // Copy the data from the current client to the new client
+        newClient->next = NULL; // Set the next pointer of the new client to NULL
 
+        // If this is the first client in the new list, set it as the head
         if (!copyHead) {
             copyHead = newClient;
         }
         else {
+            // Otherwise, link the new client to the last client in the new list
             last->next = newClient;
         }
         last = newClient;
         current = current->next;
     }
-    return copyHead;
+    return copyHead; // Return the head of the newly created list
 }
 
-// Function to sort clients by balance
 void SortClientsByBalance(Client** headRef, int descending) {
+    // Return if the list is empty or has only one element
     if (!*headRef || !(*headRef)->next) return;
 
     Client* sorted = NULL, * current = *headRef, * prev, * maxPrev, * maxNode;
@@ -839,10 +888,10 @@ void SortClientsByBalance(Client** headRef, int descending) {
 
         // Remove the max/min node from the original list
         if (maxPrev) {
-            maxPrev->next = maxNode->next;
+            maxPrev->next = maxNode->next; // Link the previous node to the next node of maxNode
         }
         else {
-            current = maxNode->next;
+            current = maxNode->next; // Move the current pointer if the maxNode is the first node
         }
 
         // Add the max/min node to the sorted list
@@ -852,7 +901,6 @@ void SortClientsByBalance(Client** headRef, int descending) {
     *headRef = sorted;
 }
 
-// Function to sort clients by string fields (e.g., name, last name, username)
 void SortClientsByStringField(Client** headRef, size_t offset, int descending) {
     if (!*headRef || !(*headRef)->next) return;
 
@@ -863,11 +911,13 @@ void SortClientsByStringField(Client** headRef, size_t offset, int descending) {
         maxNode = current;
         prev = current;
 
-        // Find the node with the max/min string value
+        // Find the node with the maximum or minimum string value based on the sorting order
         while (prev->next) {
+            // Get the string field of the current and next nodes using the provided offset
             const char* field1 = (const char*)((char*)maxNode + offset);
             const char* field2 = (const char*)((char*)prev->next + offset);
-
+            
+            // Compare the two strings and determine if we need to update maxPrev and maxNode
             if ((descending && strcmp(field2, field1) < 0) ||
                 (!descending && strcmp(field2, field1) > 0)) {
                 maxPrev = prev;
@@ -886,13 +936,13 @@ void SortClientsByStringField(Client** headRef, size_t offset, int descending) {
 
         // Add the max/min node to the sorted list
         maxNode->next = sorted;
-        sorted = maxNode;
+        sorted = maxNode; // Update the sorted list to include the max/min node at the front
     }
-    *headRef = sorted;
+    *headRef = sorted; // Set the head of the list to the sorted list
 }
 
-// Function to print the list of clients
 void PrintClientList(Client* list) {
+    // If the list is empty, print a message and return
     if (!list) {
         printf("No clients to display.\n");
         return;
@@ -904,6 +954,7 @@ void PrintClientList(Client* list) {
         "ID", "First Name", "Last Name", "Username", "Balance", "Creation Time");
     printf("---------------------------------------------------------------------------------------------------------------\n");
 
+    // Print each client’s details in the list
     while (list) {
         printf("%-5d %-20s %-20s %-20s %-10d %-20s\n",
             list->ID, list->firstName, list->lastName, list->username, list->balance, list->creationTime);
@@ -912,10 +963,12 @@ void PrintClientList(Client* list) {
 }
 
 void hashPassword(const char* password, char* hashedPassword) {
-    unsigned long hash = 5381;
+    unsigned long hash = 5381; // Initialize the hash value with a prime number
     int c;
     while ((c = *password++)) {
-        hash = ((hash << 5) + hash) + c; // hash * 33 + c
+        hash = ((hash << 5) + hash) + c; // hash = hash * 33 + c (DJB2 algorithm)
     }
-    snprintf(hashedPassword, MAX_NAME_LENGTH, "%lu", hash);
+
+    // Convert the hash value to a string and store it in the output buffer
+    snprintf(hashedPassword, MAX_NAME_LENGTH, "%lu", hash); // Store the hash as a string
 }

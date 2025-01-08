@@ -1,6 +1,1 @@
-LIST OF ACCOUNTS IN THE BANK
--------------------------------------------------------------------------------
-ID	First Name	Last Name	Username	Password	Balance	Creation Time
--------------------------------------------------------------------------------
-367	Jure	Martinic	jure	2392940246	700	2025-01-07 23:00:22
-102	Laura	Rebic	laura	160212430	1400	2025-01-07 23:09:22
+

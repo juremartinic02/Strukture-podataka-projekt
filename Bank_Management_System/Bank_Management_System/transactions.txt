@@ -1,6 +1,0 @@
-
-jurenzzy | Deposit | 300 | 2025-01-07 18:22:14
-jurenzzy | Withdraw | 200 | 2025-01-07 18:22:18
-jurenzzy | Transfer | 100 | To: duje | 2025-01-07 18:22:37
-laura | Transfer | 600 | To: jure | 2025-01-07 23:34:04
-laura | Deposit | 1000 | 2025-01-07 23:36:35
