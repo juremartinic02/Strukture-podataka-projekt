@@ -125,7 +125,7 @@ int isValidUserCredential(const char* str) {
 
     // Return false if a character is not alphabetical character or digit
     for (int i = 0; str[i] != '\0'; i++) {
-        if (!isalnum(str[i])) return 0; 
+        if (!isalnum(str[i])) return 0;
     }
     return 1;
 }
@@ -136,41 +136,25 @@ int getValidatedInput(char* buffer, size_t size) {
     if (fgets(buffer, size, stdin) == NULL) {
         return 0; // Input failed
     }
-    // Check if newline exists in the buffer
-    if (strchr(buffer, '\n') == NULL) {
+
+    // Remove trailing newline character if it exists
+    char* newlinePos = strchr(buffer, '\n');
+    if (newlinePos) {
+        *newlinePos = '\0';
+    }
+    else {
         clearInputBuffer(); // Clear excess characters
-        return 0; // Input too long
+        printf("Input too long. Try again.\n");
+        return 0;
     }
-    buffer[strcspn(buffer, "\n")] = '\0'; // Remove newline
+
+    // Ensure input is not empty
+    if (strlen(buffer) == 0) {
+        printf("Input cannot be empty. Try again.\n");
+        return 0;
+    }
+
     return 1; // Input successful
-}
-
-int generateUniqueID() {
-    // Static variable ensures `srand` is called only once per program execution
-    static int initialized = 0;
-    if (!initialized) {
-        srand((unsigned int)time(NULL));
-        initialized = 1;
-    }
-
-    int newID;
-    int isUnique;
-    do {
-        isUnique = 1;
-        newID = rand() % 1001;  // Generate ID between 0 and 1000
-
-        // Check if ID already exists
-        Client* current = head;
-        while (current != NULL) {
-            if (current->ID == newID) {
-                isUnique = 0;
-                break;
-            }
-            current = current->next;
-        }
-    } while (!isUnique); // Repeat until a unique ID is generated
-
-    return newID;
 }
 
 void clearInputBuffer() {
@@ -190,14 +174,27 @@ void CreateAccount() {
     char passwordConfirm[MAX_NAME_LENGTH]; // Buffer for password confirmation
 
     // Generate random unique ID
-    newClient->ID = generateUniqueID();
+    do {
+        newClient->ID = rand() % 10000; // Generate a larger range of random IDs
+        Client* current = head;
+        int idExists = 0;
+        while (current != NULL) {
+            if (current->ID == newClient->ID) { // Check if there is already account with that number
+                idExists = 1;
+                break;
+            }
+            current = current->next;
+        }
+        if (!idExists) break;
+    } while (1);
+
     printf("\nGenerated ID for new client: %d\n", newClient->ID);
 
     // First Name validation
     do {
         printf("Enter first name (letters only, max %d characters): ", MAX_NAME_LENGTH - 1);
         if (getValidatedInput(buffer, sizeof(buffer)) && isValidName(buffer)) {
-            strcpy(newClient->firstName, buffer); // Store validatet first name
+            strcpy(newClient->firstName, buffer); // Store validated first name
             break;
         }
         printf("Invalid first name or input too long! Use only letters.\n");
@@ -311,8 +308,12 @@ void FreeClientList() {
     while (head != NULL) {
         temp = head;
         head = head->next;
-        free(temp);
+
+        // Ensure all dynamically allocated strings are freed if any
+        free(temp); // Free the client node
     }
+
+    printf("Client list successfully freed.\n");
 }
 
 void LoadClientsFromFile() {
@@ -434,7 +435,7 @@ void SaveClientsToFileAfterDeletion() {
 void DeleteAccount() {
     char username[MAX_NAME_LENGTH];
     char password[MAX_NAME_LENGTH];
-    char confirmation;
+    char confirmation[2];
 
     // Prompt for username and password
     printf("Enter username of the account to delete: ");
@@ -455,11 +456,16 @@ void DeleteAccount() {
         // Check if username and hashed password match
         if (strcmp(temp->username, username) == 0 && strcmp(temp->password, hashedInput) == 0) {
             // Prompt for confirmation before deletion
-            printf("Account found! Are you sure you want to delete this account? (y/n): ");
-            confirmation = getchar();
-            clearInputBuffer(); // Clear any excess input
+            do {
+                printf("Account found! Are you sure you want to delete this account? (y/n): ");
+                getValidatedInput(confirmation, sizeof(confirmation));
+                if (strlen(confirmation) == 1 && (confirmation[0] == 'y' || confirmation[0] == 'n')) {
+                    break;
+                }
+                printf("Invalid input! Please enter 'y' or 'n'.\n");
+            } while (1);
 
-            if (tolower(confirmation) == 'y') {
+            if (confirmation[0] == 'y') {
                 // Remove the account from the linked list
                 if (prev == NULL) {
                     head = temp->next;
@@ -642,6 +648,12 @@ void Transactions() {
             // Get the username of the transfer recipient
             printf("Enter the username of the recipient: ");
             getValidatedInput(targetUsername, sizeof(targetUsername));
+
+            // Check if the user is trying to transfer to themselves
+            if (strcmp(username, targetUsername) == 0) {
+                printf("You cannot transfer money to your own account!\n");
+                break;
+            }
 
             // Find the recipient client
             targetUser = FindClientByUsername(targetUsername, NULL);

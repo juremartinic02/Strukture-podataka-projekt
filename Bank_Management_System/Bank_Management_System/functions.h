@@ -64,13 +64,6 @@ int isValidUserCredential(const char* str);
 int getValidatedInput(char* buffer, size_t size);
 
 /*
-    Function generateUniqueID();
-    -------------------------------------
-        Generates a unique random ID for a new client.
-*/
-int generateUniqueID();
-
-/*
     Function clearInputBuffer();
     -------------------------------------
         Clears the input buffer.
