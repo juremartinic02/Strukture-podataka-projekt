@@ -35,22 +35,22 @@ void CreateAccount() {
 
     // First Name validation
     do {
-        printf("Enter first name (letters only, max %d characters): ", MAX_NAME_LENGTH - 1);
+        printf("Enter first name(s) (letters and spaces only, max %d characters): ", MAX_NAME_LENGTH - 1);
         if (getValidatedInput(buffer, sizeof(buffer)) && isValidName(buffer)) {
-            strcpy(newClient->firstName, buffer); // Store validated first name
+            strcpy(newClient->firstName, buffer); // Store validated first name(s)
             break;
         }
-        printf("Invalid first name or input too long! Use only letters.\n");
+        printf("Invalid first name(s). Use only letters and spaces.\n");
     } while (1);
 
     // Last Name validation
     do {
-        printf("Enter last name (letters only, max %d characters): ", MAX_NAME_LENGTH - 1);
+        printf("Enter last name(s) (letters and spaces only, max %d characters): ", MAX_NAME_LENGTH - 1);
         if (getValidatedInput(buffer, sizeof(buffer)) && isValidName(buffer)) {
-            strcpy(newClient->lastName, buffer); // Store validated last name
+            strcpy(newClient->lastName, buffer); // Store validated last name(s)
             break;
         }
-        printf("Invalid last name or input too long! Use only letters.\n");
+        printf("Invalid last name(s). Use only letters and spaces.\n");
     } while (1);
 
     // Username validation

@@ -114,32 +114,29 @@ void Menu() {
 
 void SaveClientsToFile() {
     FILE* file = NULL;
-    file = fopen("clients.txt", "w"); // Open the file in write mode so we can save clients to the clients.txt file
+    file = fopen("clients.txt", "w"); // Open the file in write mode
     if (!file) {
         perror("Failed to open file");
         return;
     }
 
-    // Check if the file is empty to write headers
-    fseek(file, 0, SEEK_END); // Move the file pointer to the end of the file
-    if (ftell(file) == 0) { // If file size is 0, write headers
-        fprintf(file, "LIST OF ACCOUNTS IN THE BANK\n");
-        fprintf(file, "-------------------------------------------------------------------------------\n");
-        fprintf(file, "ID\tFirst Name\tLast Name\tUsername\tPassword\tBalance\tCreation Time\n");
-        fprintf(file, "-------------------------------------------------------------------------------\n");
-    }
+    // Write headers
+    fprintf(file, "LIST OF ACCOUNTS IN THE BANK\n");
+    fprintf(file, "-------------------------------------------------------------------------------\n");
+    fprintf(file, "ID\tFirst Name(s)\tLast Name(s)\tUsername\tPassword\tBalance\tCreation Time\n");
+    fprintf(file, "-------------------------------------------------------------------------------\n");
 
     // Traverse the linked list and write each client's data
     Client* temp = head;
     while (temp) {
-        fprintf(file, "%d\t%s\t%s\t%s\t%s\t%d\t%s\n",
+        fprintf(file, "%d\t\"%s\"\t\"%s\"\t%s\t%s\t%d\t%s\n",
             temp->ID, temp->firstName, temp->lastName,
             temp->username, temp->password, temp->balance, temp->creationTime);
         temp = temp->next;
     }
 
     fclose(file);
-    printf("All clients appended to file successfully.\n");
+    printf("All clients saved to file successfully.\n");
 }
 
 void FreeClientList() {
@@ -166,7 +163,7 @@ void LoadClientsFromFile() {
     }
 
     char line[256];
-    for (int i = 0; i < 3; i++) { // Skip headers
+    for (int i = 0; i < 4; i++) { // Skip headers
         if (fgets(line, sizeof(line), file) == NULL) {
             fclose(file);
             return;
@@ -183,21 +180,14 @@ void LoadClientsFromFile() {
         }
 
         // Parse the data from the line into the Client structure
-        if (sscanf(line, "%d\t%s\t%s\t%s\t%s\t%d\t%[^\n]", &newClient->ID, newClient->firstName,
-            newClient->lastName, newClient->username, newClient->password,
+        if (sscanf(line, "%d\t\"%[^\"]\"\t\"%[^\"]\"\t%s\t%s\t%d\t%[^\n]",
+            &newClient->ID, newClient->firstName, newClient->lastName,
+            newClient->username, newClient->password,
             &newClient->balance, newClient->creationTime) != 7) {
             free(newClient);
             continue;
         }
 
-        // Verify if passwords are hashed
-        if (strspn(newClient->password, "0123456789") != strlen(newClient->password)) {
-            
-            // If the password is not numeric, hash it and store the hashed version
-            char hashedPassword[MAX_NAME_LENGTH];
-            hashPassword(newClient->password, hashedPassword);
-            strcpy(newClient->password, hashedPassword);
-        }
 
         newClient->next = head;
         head = newClient;
@@ -220,13 +210,13 @@ void PrintClients() {
     // Print headers with proper alignment
     printf("LIST OF ACCOUNTS IN THE BANK\n");
     printf("---------------------------------------------------------------------------------------------------------------\n");
-    printf("%-5s %-20s %-20s %-20s %-10s %-20s\n",
-        "ID", "First Name", "Last Name", "Username", "Balance", "Creation Time");
+    printf("%-5s %-25s %-25s %-25s %-10s %-20s\n",
+        "ID", "First Name(s)", "Last Name(s)", "Username", "Balance", "Creation Time");
     printf("---------------------------------------------------------------------------------------------------------------\n");
 
     while (temp) {
-        // Print each clients details with proper alignment
-        printf("%-5d %-20s %-20s %-20s %-10d %-20s\n",
+        // Print each client's details with proper alignment
+        printf("%-5d %-25s %-25s %-25s %-10d %-20s\n",
             temp->ID, temp->firstName, temp->lastName,
             temp->username, temp->balance, temp->creationTime);
         temp = temp->next;

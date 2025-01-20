@@ -6,15 +6,14 @@
 #include "client_management.h"
 
 int isValidName(const char* name) {
-    // Check if the name is empty or exceeds the maximum allowed length
     if (strlen(name) > MAX_NAME_LENGTH - 1 || strlen(name) == 0) return 0;
 
-    // Check every character of the name and return false if a character is neither alpabetic or space
     for (int i = 0; name[i] != '\0'; i++) {
-        if (!isalpha(name[i]) && name[i] != ' ') return 0;
+        if (!isalpha(name[i]) && name[i] != ' ') return 0; // Allow spaces in names
     }
     return 1;
 }
+
 
 int isValidUserCredential(const char* str) {
     // Check if the string is empty or exceeds the maximum allowed length
