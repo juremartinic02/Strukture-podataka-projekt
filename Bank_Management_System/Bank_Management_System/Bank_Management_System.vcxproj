@@ -140,7 +140,10 @@
     <Text Include="transactions.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="client_management.h" />
     <ClInclude Include="functions.h" />
+    <ClInclude Include="parameter_validation.h" />
+    <ClInclude Include="sort.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

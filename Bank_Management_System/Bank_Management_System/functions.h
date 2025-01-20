@@ -10,7 +10,7 @@
 #include<ctype.h>
 #include<crtdbg.h> // library koji nam omogucuje provjeru oslobadjanja alocirane memorije
 
-#define MAX_NAME_LENGTH 32
+#define MAX_NAME_LENGTH 128
 
 // Definicija strukture klijent
 typedef struct client {
